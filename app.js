@@ -60,7 +60,7 @@ const BEERS = [
     style: "Пилснер",
     abv: "< 0,5 %", temp: "4–6 °C", glassLabel: "Высокий бокал",
     glass: "pils",
-    liquid: "#E6BE33", liquid2: "#F0D566", foam: "#F6EFD9", foamH: .10, haze: 0,
+    liquid: "#E9D158", liquid2: "#F2E382", foam: "#F8F3E2", foamH: .10, haze: 0,
     accent: "#8C7418",
     tagline: "Северогерманская горчинка в чистом виде.",
     story: "Jever — пивоварня с ветреного севера Германии, из Фрисландии, знаменитая самым сухим и горьким пилснером страны. Fun — её безалкогольная версия с тем же бескомпромиссным характером.",
@@ -84,7 +84,7 @@ const BEERS = [
     style: "Средиземноморский лагер",
     abv: "0,0 %", temp: "4–5 °C", glassLabel: "Бокал для лагера",
     glass: "pils",
-    liquid: "#E4B93F", liquid2: "#EED06B", foam: "#F6EFD9", foamH: .11, haze: 0,
+    liquid: "#DFAD2F", liquid2: "#EBC65C", foam: "#F6EFD9", foamH: .11, haze: 0,
     accent: "#B0872A",
     tagline: "Средиземноморское солнце в стакане.",
     story: "Барселонская Damm варит Estrella с 1876 года. Free Damm — безалкогольная версия их средиземноморского лагера, созданная, чтобы пить под солнцем и не пьянеть.",
@@ -107,8 +107,8 @@ const BEERS = [
     country: "Германия", flag: "🇩🇪",
     style: "Безалкогольный лагер",
     abv: "< 0,5 %", temp: "5–7 °C", glassLabel: "Кружка / бокал",
-    glass: "pils",
-    liquid: "#E0AE34", liquid2: "#ECC862", foam: "#F5EDD6", foamH: .12, haze: .05,
+    glass: "mug",
+    liquid: "#CE9A2F", liquid2: "#DFB556", foam: "#F3E8C8", foamH: .12, haze: .05,
     accent: "#A87A20",
     tagline: "Дедушка всех безалкогольных сортов.",
     story: "Немецкий Clausthaler — один из первых в мире безалкогольных сортов (1979) и до сих пор эталон жанра. Классический золотистый лагер, сваренный так, чтобы алкоголь почти не образовывался.",
@@ -276,7 +276,7 @@ const BEERS = [
     style: "Пилснер",
     abv: "0,0 %", temp: "4–6 °C", glassLabel: "Высокий бокал",
     glass: "pils",
-    liquid: "#E6C13C", liquid2: "#F0D268", foam: "#F6EFD9", foamH: .12, haze: 0,
+    liquid: "#E7C43E", liquid2: "#F0D66E", foam: "#F6EFD9", foamH: .15, haze: 0,
     accent: "#A67C1C",
     tagline: "Чистый немецкий пилснер, без градуса.",
     story: "Bitburger — одна из самых популярных пивоварен Германии. Их безалкогольный пилснер сухой, освежающий и очень питкий, с фирменной благородной горчинкой.",
@@ -296,28 +296,58 @@ const BEERS = [
 /* ------------------------------------------------------------
    CSS glass builder
    ------------------------------------------------------------ */
-function glassHTML(b, big) {
-  const bubbleCount = b.glass === "pint" ? 4 : 6;
+/* bubbles only on the "big" detail glass: a dozen infinitely-animating
+   glasses at once is what made the flight page churn */
+function glassHTML(b, size = "") {
   let bubbles = "";
-  for (let i = 0; i < bubbleCount; i++) {
-    const left = 20 + Math.random() * 58;
-    const dur = (2.6 + Math.random() * 2.4).toFixed(2);
-    const delay = (Math.random() * 3).toFixed(2);
-    const size = (3 + Math.random() * 2.5).toFixed(1);
-    bubbles += `<i style="left:${left}%;--bd:${dur}s;--bdl:${delay}s;width:${size}px;height:${size}px"></i>`;
+  if (size === "big") {
+    const bubbleCount = b.glass === "pint" ? 5 : 7;
+    let dots = "";
+    for (let i = 0; i < bubbleCount; i++) {
+      const left = 20 + Math.random() * 58;
+      const dur = (2.6 + Math.random() * 2.4).toFixed(2);
+      const delay = (Math.random() * 3).toFixed(2);
+      const sz = (3 + Math.random() * 2.5).toFixed(1);
+      dots += `<i style="left:${left}%;--bd:${dur}s;--bdl:${delay}s;width:${sz}px;height:${sz}px"></i>`;
+    }
+    bubbles = `<div class="glass__bubbles">${dots}</div>`;
   }
+  const handle = b.glass === "mug" ? `<div class="glass__handle"></div>` : "";
+  const cls = size ? ` glass--${size}` : "";
   const style = `--liquid:${b.liquid};--liquid2:${b.liquid2};--foam:${b.foam};--foamH:${b.foamH};--haze:${b.haze}`;
   return `
-    <div class="glass glass--${b.glass}${big ? " glass--big" : ""}" style="${style}" aria-hidden="true">
+    <div class="glass glass--${b.glass}${cls}" style="${style}" aria-hidden="true">
       <div class="glass__vessel">
         <div class="glass__liquid"></div>
         <div class="glass__foam"></div>
         <div class="glass__haze"></div>
-        <div class="glass__bubbles">${bubbles}</div>
+        ${bubbles}
         <div class="glass__shine"></div>
+        <div class="glass__rim"></div>
       </div>
+      ${handle}
       <div class="glass__base"></div>
     </div>`;
+}
+
+/* ------------------------------------------------------------
+   Journal: «попробовала» + hearts, stored on-device
+   ------------------------------------------------------------ */
+const STORE_KEY = "bez-gradusa-journal";
+function loadJournal() {
+  try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; }
+  catch { return {}; }
+}
+function saveJournal(j) {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(j)); } catch {}
+}
+function entry(id) {
+  return loadJournal()[id] || { tried: false, rating: 0 };
+}
+function setEntry(id, patch) {
+  const j = loadJournal();
+  j[id] = Object.assign({ tried: false, rating: 0 }, j[id], patch);
+  saveJournal(j);
 }
 
 const pad = (n) => String(n).padStart(2, "0");
@@ -327,15 +357,27 @@ const byId = (id) => BEERS.find((b) => b.id === id);
    Views
    ------------------------------------------------------------ */
 function homeView() {
-  const cards = BEERS.map((b, i) => `
-    <a class="card" href="#/beer/${b.id}" style="--i:${i}" aria-label="${b.name}, ${b.style}">
+  const journal = loadJournal();
+  const cards = BEERS.map((b, i) => {
+    const e = journal[b.id] || {};
+    const stamp = e.tried ? `<span class="card__stamp" title="Попробовано">✓</span>` : "";
+    const hearts = e.rating ? `<span class="card__hearts">${"♥".repeat(e.rating)}</span>` : "";
+    return `
+    <a class="card" href="#/beer/${b.id}" style="--i:${i};--accent:${b.accent}" aria-label="${b.name}, ${b.style}">
       <span class="card__num">${pad(b.n)}</span>
       <span class="card__flag">${b.flag}</span>
-      ${glassHTML(b, false)}
+      ${stamp}
+      ${glassHTML(b)}
       <span class="card__name">${b.name}</span>
       <span class="card__brewery">${b.brewery}</span>
       <span class="card__style">${b.style}</span>
-    </a>`).join("");
+      ${hearts}
+    </a>`;
+  }).join("");
+  const triedCount = BEERS.filter((b) => (journal[b.id] || {}).tried).length;
+  const headHint = triedCount > 0
+    ? `попробовано <b>${triedCount}</b> / 12`
+    : "нажми на бокал →";
 
   return `
   <section class="view">
@@ -374,7 +416,7 @@ function homeView() {
 
     <div class="flight-head">
       <h2>Флайт из&nbsp;двенадцати</h2>
-      <span class="mono">нажми на бокал →</span>
+      <span class="mono">${headHint}</span>
     </div>
     <div class="flight">${cards}</div>
   </section>`;
@@ -405,7 +447,7 @@ function detailView(b) {
       <div class="detail__stage">
         <span class="detail__id">№ ${pad(b.n)}</span>
         <span class="detail__flag">${b.flag}</span>
-        ${glassHTML(b, true)}
+        ${glassHTML(b, "big")}
       </div>
       <div class="detail__intro">
         <p class="kicker">${b.country} · ${b.style}</p>
@@ -413,6 +455,15 @@ function detailView(b) {
         <p class="detail__brewery">${b.brewery}</p>
         <p class="detail__tagline">${b.tagline}</p>
         <div class="chips">${chips}</div>
+        <div class="journal" data-journal="${b.id}">
+          <span class="journal__label">Мой вердикт</span>
+          <button type="button" class="tried" data-tried>Попробовала?</button>
+          <div class="hearts" aria-label="Оценка">
+            ${[1, 2, 3, 4, 5].map((n) =>
+              `<button type="button" data-rate="${n}" aria-label="Оценка ${n} из 5">♥</button>`
+            ).join("")}
+          </div>
+        </div>
       </div>
     </div>
 
@@ -440,18 +491,20 @@ function detailView(b) {
     </div>
 
     <nav class="detail__nav">
-      <a class="pn pn--prev" href="#/beer/${prev.id}">
+      <a class="pn pn--prev" href="#/beer/${prev.id}" aria-label="Предыдущее: ${prev.name}">
         <span class="pn__arrow">←</span>
+        <span class="pn__mini">${glassHTML(prev, "mini")}</span>
         <span>
           <span class="pn__dir">Предыдущее</span>
           <span class="pn__name">${prev.name}</span>
         </span>
       </a>
-      <a class="pn pn--next" href="#/beer/${next.id}">
+      <a class="pn pn--next" href="#/beer/${next.id}" aria-label="Следующее: ${next.name}">
         <span>
           <span class="pn__dir">Следующее</span>
           <span class="pn__name">${next.name}</span>
         </span>
+        <span class="pn__mini">${glassHTML(next, "mini")}</span>
         <span class="pn__arrow">→</span>
       </a>
     </nav>
@@ -482,7 +535,7 @@ function guideView() {
     <div class="guide__section">
       <h2><span class="n">03</span> На что обращать внимание</h2>
       <ol class="steps">
-        <li><b>Цвет.</b> Посмотри на просвет: от бледно-соломенного до чернильно-чёрного.</li>
+        <li><b>Цвет.</b> Посмотри на просвет: от бледно-соломенного до чернильно-чёрного.<span class="scale" aria-hidden="true"></span></li>
         <li><b>Аромат.</b> Сначала понюхай, слегка покрути бокал. Аромат — это половина вкуса.</li>
         <li><b>Первый глоток.</b> Сладко или сухо? Горько или мягко?</li>
         <li><b>Тело.</b> Лёгкое и водянистое или плотное и кремовое?</li>
@@ -523,24 +576,51 @@ function render() {
   const hash = location.hash.replace(/^#\/?/, "");
   const parts = hash.split("/").filter(Boolean);
 
-  let route = "home";
-  if (parts[0] === "guide") route = "guide";
-  else if (parts[0] === "beer") route = "beer";
-
-  if (route === "beer") {
+  let html, nav;
+  if (parts[0] === "beer") {
     const b = byId(parts[1]);
-    if (b) { app.innerHTML = detailView(b); setActiveNav("flight"); }
-    else { location.hash = "#/"; return; }
-  } else if (route === "guide") {
-    app.innerHTML = guideView();
-    setActiveNav("guide");
+    if (!b) { location.hash = "#/"; return; }
+    html = detailView(b); nav = "flight";
+  } else if (parts[0] === "guide") {
+    html = guideView(); nav = "guide";
   } else {
-    app.innerHTML = homeView();
-    setActiveNav("flight");
+    html = homeView(); nav = "flight";
   }
 
-  window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
-  bindDetailGestures();
+  const apply = () => {
+    app.innerHTML = html;
+    setActiveNav(nav);
+    window.scrollTo(0, 0);
+    bindDetailGestures();
+    bindJournal();
+  };
+  if (document.startViewTransition) document.startViewTransition(apply);
+  else apply();
+}
+
+/* journal interactions on detail pages */
+function bindJournal() {
+  const box = app.querySelector("[data-journal]");
+  if (!box) return;
+  const id = box.getAttribute("data-journal");
+  const triedBtn = box.querySelector("[data-tried]");
+  const hearts = [...box.querySelectorAll("[data-rate]")];
+  const paint = () => {
+    const e = entry(id);
+    triedBtn.classList.toggle("is-on", e.tried);
+    triedBtn.textContent = e.tried ? "Попробовала ✓" : "Попробовала?";
+    hearts.forEach((h) => h.classList.toggle("is-on", +h.dataset.rate <= e.rating));
+  };
+  triedBtn.addEventListener("click", () => {
+    setEntry(id, { tried: !entry(id).tried });
+    paint();
+  });
+  hearts.forEach((h) => h.addEventListener("click", () => {
+    const n = +h.dataset.rate;
+    setEntry(id, { rating: entry(id).rating === n ? 0 : n, tried: true });
+    paint();
+  }));
+  paint();
 }
 
 /* keyboard + touch navigation between beers on detail pages */

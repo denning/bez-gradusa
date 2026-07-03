@@ -38,24 +38,32 @@ body {
   font-family: var(--serif);
   font-weight: 400;
   color: var(--ink);
-  background:
-    radial-gradient(120% 90% at 50% -10%, #F7F0E0 0%, var(--paper) 42%, var(--paper-2) 100%);
-  background-attachment: fixed;
+  background: var(--paper);
   line-height: 1.62;
   overflow-x: hidden;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }
 
-/* --- paper grain overlay --- */
+/* backdrop as own composited layer — background-attachment:fixed repaints on scroll */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(120% 90% at 50% -10%, #F7F0E0 0%, var(--paper) 42%, var(--paper-2) 100%);
+}
+
+/* --- paper grain overlay ---
+   dark-only noise (luminance baked into alpha) so it composites plainly;
+   mix-blend-mode on a fixed layer re-reads the backdrop every scroll frame */
 .grain {
   position: fixed;
   inset: 0;
   z-index: 1;
   pointer-events: none;
-  opacity: .40;
-  mix-blend-mode: multiply;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+  opacity: .18;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0.4 0.4 0 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 ::selection { background: rgba(166,75,42,.22); }
@@ -94,12 +102,12 @@ a { color: inherit; text-decoration: none; }
 .wordmark__mark {
   font-family: var(--display);
   font-weight: 600;
-  font-size: 1.7rem;
+  font-size: 1.55rem;
   line-height: 1;
   color: var(--paper);
   background: var(--ink);
   width: 2.15rem; height: 2.15rem;
-  display: grid; place-items: center;
+  display: inline-flex; align-items: center; justify-content: center;
   border-radius: 50%;
   position: relative;
 }
@@ -117,7 +125,7 @@ a { color: inherit; text-decoration: none; }
   letter-spacing: .18em;
   text-transform: uppercase;
   color: var(--ink-soft);
-  padding-bottom: 4px;
+  padding: 12px 4px 6px;
   border-bottom: 1.5px solid transparent;
   transition: color .25s, border-color .25s;
 }
@@ -258,6 +266,7 @@ a { color: inherit; text-decoration: none; }
   line-height: 1;
 }
 .flight-head span { color: var(--ink-faint); }
+.flight-head b { color: var(--rust); font-weight: 700; }
 
 .flight {
   display: grid;
@@ -281,6 +290,21 @@ a { color: inherit; text-decoration: none; }
   transition: transform .35s cubic-bezier(.2,.7,.25,1), box-shadow .35s, border-color .35s;
   animation: cardIn .6s cubic-bezier(.2,.7,.25,1) both;
   animation-delay: calc(var(--i) * 55ms);
+}
+.card::after {
+  content: "";
+  position: absolute;
+  left: 50%; bottom: 0;
+  width: 54px; height: 3px;
+  background: var(--accent);
+  border-radius: 2px 2px 0 0;
+  transform: translateX(-50%) scaleX(.45);
+  opacity: .8;
+  transition: transform .35s cubic-bezier(.2,.7,.25,1), opacity .35s;
+}
+.card:hover::after, .card:focus-visible::after {
+  transform: translateX(-50%) scaleX(1.7);
+  opacity: 1;
 }
 @keyframes cardIn {
   from { opacity: 0; transform: translateY(18px); }
@@ -334,10 +358,29 @@ a { color: inherit; text-decoration: none; }
   padding: 4px 11px;
   background: rgba(255,255,255,.35);
 }
+.card__stamp {
+  position: absolute;
+  top: 36px; right: 12px;
+  width: 30px; height: 30px;
+  display: grid; place-items: center;
+  font-size: .95rem;
+  color: var(--rust);
+  border: 1.5px solid var(--rust);
+  border-radius: 50%;
+  background: rgba(246,238,221,.78);
+  transform: rotate(-8deg);
+}
+.card__hearts {
+  margin-top: 9px;
+  font-size: .8rem;
+  letter-spacing: .1em;
+  color: var(--rust);
+}
 
 /* ============================================================
    CSS BEER GLASS  (the signature element)
    ============================================================ */
+/* no filter here: drop-shadow around animated children re-renders every frame */
 .glass {
   --gw: 96px;
   --gh: 132px;
@@ -346,7 +389,6 @@ a { color: inherit; text-decoration: none; }
   position: relative;
   width: var(--gw);
   height: calc(var(--gh) + 16px);
-  filter: drop-shadow(0 10px 12px rgba(43,33,24,.18));
 }
 .glass__vessel {
   position: absolute;
@@ -367,6 +409,25 @@ a { color: inherit; text-decoration: none; }
 .glass--tulip .glass__vessel {
   clip-path: polygon(14% 0, 86% 0, 90% 30%, 78% 100%, 22% 100%, 10% 30%);
 }
+.glass--mug .glass__vessel { clip-path: polygon(13% 0, 79% 0, 79% 100%, 13% 100%); }
+.glass__handle {
+  position: absolute;
+  right: 1%;
+  top: 26%;
+  width: 21%;
+  height: 40%;
+  border: 5px solid rgba(43,33,24,.20);
+  border-left: none;
+  border-radius: 0 14px 14px 0;
+  box-shadow: inset -1px 1px 1px rgba(255,255,255,.35);
+}
+.glass__rim {
+  position: absolute;
+  top: -5px; left: 5%; right: 5%;
+  height: 10px;
+  border-radius: 50%;
+  box-shadow: inset 0 -1.5px 1px rgba(255,255,255,.42), inset 0 1px 1px rgba(43,33,24,.12);
+}
 
 .glass__liquid {
   position: absolute;
@@ -384,14 +445,13 @@ a { color: inherit; text-decoration: none; }
   background-color: var(--foam);
   background-image:
     radial-gradient(circle at 30% 60%, var(--foam), color-mix(in srgb, var(--foam) 82%, #b59f74) 100%);
-  border-radius: 50% 50% 8px 8px / 70% 70% 8px 8px;
+  border-radius: 46% 54% 8px 8px / 78% 62% 8px 8px;
   box-shadow: inset 0 3px 4px rgba(255,255,255,.6);
 }
 .glass__haze {
   position: absolute; inset: 0;
-  background: radial-gradient(80% 60% at 50% 70%, rgba(255,255,255,.55), rgba(255,255,255,0) 70%);
+  background: radial-gradient(80% 60% at 50% 70%, rgba(255,255,255,.6), rgba(255,255,255,0) 70%);
   opacity: var(--haze);
-  mix-blend-mode: screen;
 }
 .glass__shine {
   position: absolute; top: 6%; left: 14%;
@@ -409,6 +469,7 @@ a { color: inherit; text-decoration: none; }
   background: rgba(255,255,255,.5);
   animation: rise var(--bd, 3.4s) linear infinite;
   animation-delay: var(--bdl, 0s);
+  will-change: transform, opacity;
 }
 @keyframes rise {
   0%   { transform: translateY(0) scale(.6); opacity: 0; }
@@ -419,12 +480,16 @@ a { color: inherit; text-decoration: none; }
   position: absolute;
   bottom: 0; left: 50%;
   transform: translateX(-50%);
-  width: calc(var(--gw) * .5);
+  width: calc(var(--gw) * .58);
   height: 12px;
-  background: radial-gradient(closest-side, rgba(43,33,24,.22), rgba(43,33,24,0) 80%);
+  background: radial-gradient(closest-side, rgba(43,33,24,.30), rgba(43,33,24,0) 80%);
   border-radius: 50%;
 }
-.glass--big { --gw: 150px; --gh: 208px; }
+.glass--big  { --gw: 172px; --gh: 236px; }
+.glass--mini { --gw: 40px;  --gh: 54px; }
+.glass--mini .glass__rim,
+.glass--mini .glass__handle { display: none; }
+.glass--mini .glass__base { height: 7px; }
 
 /* ============================================================
    DETAIL VIEW
@@ -516,6 +581,59 @@ a { color: inherit; text-decoration: none; }
 }
 
 .chips { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px; }
+
+/* --- personal journal: tried + hearts, saved on-device --- */
+.journal {
+  margin-top: 22px;
+  padding: 14px 18px 12px;
+  border: 1px dashed var(--line);
+  border-radius: 6px;
+  background: rgba(255,255,255,.3);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 22px;
+}
+.journal__label {
+  font-family: var(--mono);
+  font-size: .62rem;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  flex-basis: 100%;
+}
+.tried {
+  font-family: var(--mono);
+  font-size: .72rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  background: none;
+  border: 1.5px solid var(--line);
+  border-radius: 100px;
+  padding: 11px 18px;
+  min-height: 44px;
+  cursor: pointer;
+  transition: color .25s, background .25s, border-color .25s;
+}
+.tried.is-on {
+  color: var(--paper);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.hearts { display: flex; gap: 2px; }
+.hearts button {
+  width: 44px; height: 44px;
+  display: grid; place-items: center;
+  background: none; border: none; padding: 0;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--line);
+  cursor: pointer;
+  transition: transform .15s, color .2s;
+}
+.hearts button.is-on { color: var(--accent); }
+.hearts button:active { transform: scale(1.25); }
 .chip {
   display: inline-flex; flex-direction: column; gap: 2px;
   padding: 8px 14px;
@@ -638,9 +756,11 @@ a { color: inherit; text-decoration: none; }
 .pn--next { justify-content: flex-end; text-align: right; }
 .pn__mini { flex: 0 0 auto; }
 .pn__dir {
+  display: block;
   font-family: var(--mono);
   font-size: .64rem; letter-spacing: .2em; text-transform: uppercase;
   color: var(--ink-faint);
+  margin-bottom: 2px;
 }
 .pn__name { font-family: var(--display); font-weight: 600; font-size: 1.2rem; line-height: 1.05; }
 .pn__arrow { font-size: 1.3rem; color: var(--ink-soft); }
@@ -737,6 +857,26 @@ a { color: inherit; text-decoration: none; }
 }
 
 /* ============================================================
+   Fit & finish
+   ============================================================ */
+:focus-visible { outline: 2px solid var(--rust); outline-offset: 3px; }
+.detail__name, .guide__head h1, .guide__section h2, .card__name { text-wrap: balance; }
+.prose p, .guide__section p { text-wrap: pretty; }
+.prose p, .note__val, .lookfor li, .guide__section p,
+.guide ol.steps li, .guide ul.tips li {
+  -webkit-hyphens: auto;
+  hyphens: auto;
+}
+.scale {
+  display: block;
+  margin-top: 10px;
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #F2E37E, #E6BE33, #CE8A2C, #8A4A1E, #452216, #16100B);
+}
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: .25s; }
+
+/* ============================================================
    Responsive
    ============================================================ */
 @media (max-width: 940px) {
@@ -768,4 +908,5 @@ a { color: inherit; text-decoration: none; }
     transition-duration: .01ms !important;
   }
   .glass__bubbles i { display: none; }
+  ::view-transition-old(root), ::view-transition-new(root) { animation: none !important; }
 }
